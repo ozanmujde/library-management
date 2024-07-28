@@ -34,12 +34,13 @@ npm run start
 ### Database Setup
 mysql -u root -p in this config password was 123
 
+```sql
 CREATE DATABASE library_management;
 USE library_management;
-
+```
 
 -- DDL script to create tables for the library management system
-
+```sql
 -- Create Users table
 CREATE TABLE Users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,10 +70,11 @@ CREATE TABLE Borrows (
     FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE,
     FOREIGN KEY (bookId) REFERENCES Books(id) ON DELETE CASCADE
 );
-
+```
 
 to check afterwards
 
+```sql
 SHOW TABLES;
 
 +------------------+
@@ -82,3 +84,4 @@ SHOW TABLES;
 | Books            |
 | Users            |
 +------------------+
+```
