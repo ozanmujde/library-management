@@ -10,7 +10,6 @@ app.use(bodyParser.json());
 app.use("/users", userRoutes);
 app.use("/books", bookRoutes);
 
-// Error handling middleware
 app.use(errorHandler);
 
 const PORT = 3000;

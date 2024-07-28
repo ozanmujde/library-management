@@ -8,18 +8,17 @@ export const getBooks = async (req: Request, res: Response) => {
 };
 
 export const getBook = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const book = await Book.findByPk(id);
-  const scores = await Borrow.findAll({ where: { bookId: id } });
 
-  if (book) {
-    const averageScore = scores.length
-      ? scores.reduce((acc, curr) => acc + curr.score, 0) / scores.length
-      : -1;
-    res.json({ ...book.toJSON(), score: averageScore });
-  } else {
-    res.status(404).send("Book not found");
+  if (!book) {
+    return res.status(404).send("Book not found");
   }
+
+  const bookJson = book.toJSON();
+  delete bookJson.scoreCount;
+
+  res.json(bookJson);
 };
 
 export const createBook = async (req: Request, res: Response) => {

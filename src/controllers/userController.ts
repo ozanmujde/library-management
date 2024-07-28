@@ -10,15 +10,14 @@ export const getUsers = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const user = await User.findByPk(id, {
-    include: [
-      { model: Book, as: "borrowedBooks", through: { attributes: [] } },
-    ],
+    include: [{ model: Book, as: "borrowedBooks" }],
   });
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).send("User not found");
+
+  if (!user) {
+    return res.status(404).send("User not found");
   }
+
+  res.json(user);
 };
 
 export const createUser = async (req: Request, res: Response) => {
@@ -32,7 +31,7 @@ export const createUser = async (req: Request, res: Response) => {
 };
 
 export const borrowBook = async (req: Request, res: Response) => {
-  const { id, bookId } = req.params;
+  const { id, bookId } = req.params as { id: string; bookId: string };
   const user = await User.findByPk(id);
   const book = await Book.findByPk(bookId);
 
@@ -40,7 +39,15 @@ export const borrowBook = async (req: Request, res: Response) => {
     return res.status(404).send("User or Book not found");
   }
 
-  const borrow = await Borrow.create({ userId: id, bookId });
+  const existingBorrow = await Borrow.findOne({
+    where: { bookId },
+  });
+
+  if (existingBorrow) {
+    return res.status(400).send("This book is already borrowed by the user.");
+  }
+
+  await Borrow.create({ userId: id, bookId });
   res.status(204).send();
 };
 
@@ -58,7 +65,24 @@ export const returnBook = async (req: Request, res: Response) => {
     return res.status(404).send("Borrow record not found");
   }
 
-  borrow.score = score;
-  await borrow.save();
+  // Retrieve the current book and its average score
+  const book = await Book.findByPk(bookId);
+  if (!book) {
+    return res.status(404).send("Book not found");
+  }
+
+  const currentAverageScore = book.averageScore || 0;
+  const scoreCount = book.scoreCount || 0;
+  const newScoreCount = scoreCount + 1;
+  const newAverageScore =
+    (currentAverageScore * scoreCount + score) / newScoreCount;
+
+  book.averageScore = newAverageScore;
+  book.scoreCount = newScoreCount;
+  await book.save();
+
+  // Remove the borrow record
+  await Borrow.destroy({ where: { userId: id, bookId } });
+
   res.status(204).send();
 };
